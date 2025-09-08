@@ -10,11 +10,11 @@ void gerenciar_conversao(int opcao, double x, double y, double z,
             printf("Coordenadas Cilíndricas: (r=%.2f, θ=%.2f rad, z=%.2f)\n", *cil_r, *cil_theta, *cil_z);
             break;
         case 2:
-            cartesiano_para_esferico_matematica(x, y, z, esf_rho, esf_theta, esf_phi);
+            cartesiano_para_esferico_math(x, y, z, esf_rho, esf_theta, esf_phi);
             printf("Coordenadas Esféricas (Matemática): (phi=%.2f, θ=%.2f rad, φ=%.2f rad)\n", *esf_rho, *esf_theta, *esf_phi);
             break;
         case 3:
-            cartesiano_para_esferico_fisica(x, y, z, esf_rho, esf_theta, esf_phi);
+            cartesiano_para_esferico_phys(x, y, z, esf_rho, esf_theta, esf_phi);
             printf("Coordenadas Esféricas (Física): (phi=%.2f, θ=%.2f rad, φ=%.2f rad)\n", *esf_rho, *esf_theta, *esf_phi);
             break;
         case 4:
