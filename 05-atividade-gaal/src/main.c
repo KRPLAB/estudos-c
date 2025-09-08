@@ -11,11 +11,11 @@ void gerenciar_conversao(int opcao, double x, double y, double z,
             break;
         case 2:
             cartesiano_para_esferico_math(x, y, z, esf_rho, esf_theta, esf_phi);
-            printf("Coordenadas Esféricas (Matemática): (phi=%.2f, θ=%.2f rad, φ=%.2f rad)\n", *esf_rho, *esf_theta, *esf_phi);
+            printf("Coordenadas Esféricas (Matemática): (ρ=%.2f, θ=%.2f rad, φ=%.2f rad)\n", *esf_rho, *esf_theta, *esf_phi);
             break;
         case 3:
             cartesiano_para_esferico_phys(x, y, z, esf_rho, esf_theta, esf_phi);
-            printf("Coordenadas Esféricas (Física): (phi=%.2f, θ=%.2f rad, φ=%.2f rad)\n", *esf_rho, *esf_theta, *esf_phi);
+            printf("Coordenadas Esféricas (Física): (ρ=%.2f, θ=%.2f rad, φ=%.2f rad)\n", *esf_rho, *esf_theta, *esf_phi);
             break;
         case 4:
             cilindrico_para_cartesiano(x, y, z, cil_r, cil_theta, cil_z);
@@ -27,7 +27,7 @@ void gerenciar_conversao(int opcao, double x, double y, double z,
             break;
         case 6:
             cilindrico_para_esferico(x, y, z, cil_r, cil_theta, cil_z);
-            printf("Coordenadas Esféricas: (phi=%.2f, θ=%.2f rad, φ=%.2f rad)\n", *cil_r, *cil_theta, *cil_z);
+            printf("Coordenadas Esféricas: (ρ=%.2f, θ=%.2f rad, φ=%.2f rad)\n", *cil_r, *cil_theta, *cil_z);
             break;
         case 7:
             esferico_para_cilindrico(x, y, z, esf_rho, esf_theta, esf_phi);
@@ -66,18 +66,19 @@ int main() {
     scanf("%d", &opcao);
 
     printf("Digite as coordenadas do ponto:\n");
-    printf("x: ");
+    printf("coord_1: ");
     scanf("%lf", &input_x);
-    printf("y: ");
+    printf("coord_2: ");
     scanf("%lf", &input_y);
-    printf("z: ");
+    printf("coord_3: ");
     scanf("%lf", &input_z);
 
-    printf("Ponto Cartesiano Original: (x=%.2f, y=%.2f, z=%.2f)\n\n", input_x, input_y, input_z);
+    printf("Ponto Cartesiano Original: (coord_1=%.2f, coord_2=%.2f, coord_3=%.2f)\n\n", input_x, input_y, input_z);
 
     gerenciar_conversao(opcao, input_x, input_y, input_z,
                         &cil_r, &cil_theta, &cil_z,
                         &esf_rho, &esf_theta, &esf_phi);
 
+    printf("========================= Fim do programa =========================\n");
     return 0;
 }
