@@ -35,3 +35,15 @@ void esferico_para_cartesiano(double rho, double theta, double phi, double *x_ou
 	*y_out = sin(theta)*(rho*sin(phi));
 	*z_out = cos(phi)*rho;
 }
+
+void cilindrico_para_esferico(double rho, double theta, double z, double *rho_out, double *theta_out, double *phi_out){
+	*rho_out = sqrt((rho*rho) + (z*z));
+	*theta_out = theta;
+	*phi_out = atan2(rho,z);
+}
+
+void esferico_para_cilindrico(double rho, double theta, double phi, double *rho_out, double *theta_out, double *z_out){
+	*rho_out = rho*sin(phi);
+	*theta_out = theta;
+	*z_out = rho*cos(phi);
+}
