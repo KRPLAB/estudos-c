@@ -1,6 +1,7 @@
 # Projeto: Conversor de Coordenadas Geométricas
 
 **Autor:** Kauan da Rosa Paulino
+
 **Disciplina:** Geometria Analítica e Álgebra Linear
 
 ## Descrição
