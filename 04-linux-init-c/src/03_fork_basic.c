@@ -1,34 +1,29 @@
+/* fork_demo.c - Demonstra a criação de um processo filho. */
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
 
-int main() {
-	    pid_t pid_fork;
+int main(void) {
+    pid_t pid_filho;
 
-	        printf("--- Início do Programa ---\n");
-		    printf("Meu PID antes do fork é: %d\n", getpid());
-		        printf("Vou criar um novo processo agora...\n\n");
+    printf("Início do programa. Meu PID é %d\n", getpid());
 
-			    pid_fork = fork();
+    pid_filho = fork(); // O processo é clonado aqui!
 
-			        if (pid_fork < 0) {
-					        // --- Tratamento de Erro ---
-						//         fprintf(stderr, "A criação do processo filho falhou!\n");
-						//                 return 1;
-						//                     } else if (pid_fork == 0) {
-						//                             // --- Bloco de código do FILHO ---
-						//                                     printf("[FILHO] 👶 Meu PID é: %d\n", getpid());
-						//                                             printf("[FILHO] 👶 O PID do meu pai é: %d\n", getppid());
-						//                                                 } else {
-						//                                                         // --- Bloco de código do PAI ---
-						//                                                                 printf("[PAI] 👴 Meu PID é: %d\n", getpid());
-						//                                                                         printf("[PAI] 👴 O PID do meu processo filho é: %d\n", pid_fork);
-						//                                                                                 printf("[PAI] 👴 O PID do meu pai (o shell) é: %d\n", getppid());
-						//                                                                                     }
-						//
-						//                                                                                         // Esta linha será executada por AMBOS os processos!
-						//                                                                                             printf("--- Fim da execução para o processo %d ---\n", getpid());
-						//
-						//                                                                                                 return 0;
-						//                                                                                                 }
-						//
+    if (pid_filho < 0) {
+        perror("fork falhou");
+        return 1;
+    } else if (pid_filho == 0) {
+        // Bloco de código do processo FILHO
+        printf("--> [FILHO] Olá! Meu PID é %d.\n", getpid());
+        printf("--> [FILHO] Meu pai tem o PID %d.\n", getppid());
+    } else {
+        // Bloco de código do processo PAI
+        printf("--> [PAI] Eu criei um filho com PID = %d\n", pid_filho);
+        printf("--> [PAI] Meu PID continua sendo %d.\n", getpid());
+    }
+
+    printf("Fim do escopo do main para o processo PID=%d\n", getpid());
+    return 0;
+}
+
