@@ -1,9 +1,8 @@
-//hello para ARM64/ARM compilado com 
-//aarch64-linux-gnu-gcc -static -o hello hello.c
-
+/* hello.c - Nosso primeiro programa para AArch64 */
 #include <stdio.h>
-int main() {
-	printf("Hello Arch Init!\n");
-	return 0;
-}
+#include <unistd.h>
 
+int main(void) {
+    printf("Olá do mundo ARM64! Meu PID é %d.\n", getpid());
+    return 0;
+}
