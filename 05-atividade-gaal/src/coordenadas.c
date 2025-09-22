@@ -18,11 +18,11 @@ void cilindrico_para_cartesiano(double rho, double theta, double z, double *x_ou
 // corretamente com todos os quadrantes
 void cartesiano_para_esferico_phys(double x, double y, double z, double *rho_out, double *theta_out, double *phi_out){
 	*rho_out = sqrt((x*x) + (y*y) + (z*z));
-	*theta_out = atan2(y,x); // theta (θ) é o ângulo azimutal no plano XY
-	*phi_out = atan2(sqrt((x*x) + (y*y)),z); // phi (φ) é o ângulo de inclinação a partir de Z
+	*theta_out = atan2(y,x);
+	*phi_out = atan2(sqrt((x*x) + (y*y)),z);
 }
 
-// VERSÃO PADRÃO DA MATEMÁTICA (utilizada aqui)
+// VERSÃO PADRÃO DA MATEMÁTICA (utilizada: solicitada no enunciado)
 // A única mudança é a troca de papéis entre theta e phi.
 void cartesiano_para_esferico_math(double x, double y, double z, double *rho_out, double *theta_out, double *phi_out){
 	*rho_out = sqrt((x*x) + (y*y) + (z*z));

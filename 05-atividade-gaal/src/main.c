@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "../include/coordenadas.h"
 
 void gerenciar_conversao(int opcao, double x, double y, double z,
@@ -39,7 +40,7 @@ void gerenciar_conversao(int opcao, double x, double y, double z,
     }
 }
 
-int main() {
+int main_console() {
     // Ponto cartesiano inicial
     double input_x;
     double input_y;
@@ -80,5 +81,32 @@ int main() {
                         &esf_rho, &esf_theta, &esf_phi);
 
     printf("========================= Fim do programa =========================\n");
+    return 0;
+}
+
+int main(int argc, char *argv[]) {
+    // Verificar se deve executar em modo console
+    if (argc > 1 && strcmp(argv[1], "--console") == 0) {
+        return main_console();
+    }
+
+    App app;
+    
+    if (!init_sdl(&app)) {
+        printf("Falha ao inicializar SDL. Executando em modo console...\n");
+        return main_console();
+    }
+
+    printf("Conversor de Coordenadas iniciado em modo gráfico!\n");
+    printf("Use --console para executar em modo texto.\n");
+
+    // Loop principal
+    while (app.running) {
+        handle_events(&app);
+        render(&app);
+        SDL_Delay(16);
+    }
+
+    cleanup_sdl(&app);
     return 0;
 }
