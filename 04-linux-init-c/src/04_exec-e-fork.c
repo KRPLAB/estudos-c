@@ -1,40 +1,39 @@
-#include <stdio.h>
-#include <stdio.h>
+/*
+Criação de processos em UNIX, com execução de outro binário
+
+Compilar com gcc -Wall fork-execve.c -o fork-execve
+
+Carlos Maziero, DINF/UFPR 2020
+*/
+
 #include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 
-int main(void) {
-    printf("Início do programa. Meu PID é %d\n", getpid());
-
-    // clonando o processo
-    pid_t pid_filho = fork();
-
-    if (pid_filho < 0)
+int main (int argc, char *argv[], char *envp[])
+{
+  int retval ;
+   
+  printf ("Ola, sou o processo %5d\n", getpid()) ;
+  retval = fork () ;
+  printf ("[retval: %5d] sou %5d, filho de %5d\n", retval, getpid(), getppid()) ;
+             
+  if ( retval < 0 )       // erro no fork ()
+  {
+    perror ("Erro: ") ;
+    exit (1) ;
+  }
+  else 
+    if ( retval > 0 )     // sou o processo pai
+      wait (0) ;
+    else                  // sou o processo filho
     {
-        perror("fork falhou");
-        return 1;
-    }
-    else if (pid_filho == 0)
-    {
-        printf("--> [FILHO] Meu PID é %d. Vou me transformar no comando 'ls -lh'.\n", getpid());
-
-        // Substitui este processo pelo comando 'ls'
-        // Argumentos: programa, arg0, arg1, arg2, ..., NULL
-        execlp("ls", "ls", "-l", "-h", NULL);
-
-        // Esta parte do código SÓ é executada se o execlp falhar!
-        perror("execlp falhou");
-        return 1;
-    }
-    else
-    {
-        // --- Bloco do Pai ---
-        printf("--> [PAI] Criei o filho com PID %d. Vou aguardar ele terminar.\n", pid_filho);
-        // (Em uma task futura, aprenderemos a esperar de verdade com wait())
+      execve ("/bin/date", argv, envp) ;
+      perror ("Erro") ;
     }
 
-    // Apenas o pai chegará aqui (se o exec do filho funcionar)
-    printf("--> [PAI] O filho já deve ter terminado. Fim do programa.\n");
-
-    return 0;
+  printf ("Tchau de %5d!\n", getpid()) ;
+  exit (0) ;
 }

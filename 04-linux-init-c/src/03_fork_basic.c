@@ -4,22 +4,22 @@
 #include <sys/types.h>
 
 int main(void) {
-    pid_t pid_filho;
+    int retval;
 
     printf("Início do programa. Meu PID é %d\n", getpid());
 
-    pid_filho = fork(); // O processo é clonado aqui!
+    retval = fork(); // O processo é clonado aqui!
 
-    if (pid_filho < 0) {
+    if (retval < 0) {
         perror("fork falhou");
-        return 1;
-    } else if (pid_filho == 0) {
+        exit(1);
+    } else if (retval == 0) {
         // Bloco de código do processo FILHO
         printf("--> [FILHO] Olá! Meu PID é %d.\n", getpid());
         printf("--> [FILHO] Meu pai tem o PID %d.\n", getppid());
     } else {
         // Bloco de código do processo PAI
-        printf("--> [PAI] Eu criei um filho com PID = %d\n", pid_filho);
+        printf("--> [PAI] Eu criei um filho com PID = %d\n", retval);
         printf("--> [PAI] Meu PID continua sendo %d.\n", getpid());
     }
 
