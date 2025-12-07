@@ -1,0 +1,122 @@
+\documentclass[a4paper,12pt]{article}
+
+% Pacotes fundamentais para o Brasil e Computação
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage{geometry}
+\usepackage{amsmath, amssymb} % Para matemática
+\usepackage{graphicx}
+\usepackage{listings} % Para código C
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{tikz} % Para diagramas
+
+% Configuração das margens
+\geometry{a4paper, left=3cm, top=3cm, right=2cm, bottom=2cm}
+
+% Configuração de cores para código
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    language=C
+}
+\lstset{style=mystyle}
+
+% Dados do Trabalho
+\title{\textbf{Relatório Técnico: Cálculo de $\pi$ com Pthreads}\\
+\large Trabalho 2 - Arquitetura e Sistemas Operacionais}
+\author{Seu Nome (Iniciais) \and Nome do Dupla (Iniciais)}
+\date{Dezembro de 2025}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Introdução}
+O objetivo deste trabalho é explorar o paralelismo em nível de thread (TLP) utilizando a biblioteca POSIX Threads (\texttt{pthreads}) em ambiente Linux. O problema proposto consiste no cálculo numérico da constante $\pi$ através da Série de Leibniz, utilizando precisão dupla e processamento distribuído entre múltiplos núcleos de processamento.
+
+A Série de Leibniz para $\pi$ é dada por:
+\begin{equation}
+    \frac{\pi}{4} = \sum_{n=0}^{\infty} \frac{(-1)^n}{2n+1} = 1 - \frac{1}{3} + \frac{1}{5} - \frac{1}{7} + \dots
+\end{equation}
+
+Para obter o valor de $\pi$, calcula-se a somatória de $N$ termos (neste trabalho, $N=10^9$) e multiplica-se o resultado final por 4.
+
+\section{Metodologia}
+Para o desenvolvimento da solução, foi adotada uma abordagem incremental, partindo da compreensão teórica da criação de tarefas até a implementação da lógica matemática específica.
+
+\subsection{Fundamentação Teórica e Referências}
+A base teórica para a manipulação de threads foi construída a partir de duas fontes principais:
+\begin{enumerate}
+    \item \textbf{Conceitos de Sistemas Operacionais:} Foram utilizadas as definições de processo leve (thread) e o modelo de memória compartilhada descritos por Maziero [1]. Especificamente, a Aula 05 serviu de guia para a estrutura básica de criação (\texttt{pthread\_create}) e junção (\texttt{pthread\_join}) de tarefas.
+    \item \textbf{Implementação Prática em C:} Para detalhes de implementação da API POSIX, consultou-se a série didática "Unix Threads in C" do canal CodeVault [2], que demonstra padrões seguros de passagem de argumentos para threads.
+\end{enumerate}
+
+\subsection{Estratégia de Paralelização}
+O problema foi classificado como \textit{Embarrassingly Parallel} (trivilamente paralelo), pois cada termo da série pode ser calculado independentemente dos outros. A estratégia adotada foi a **Decomposição de Domínio**:
+
+\begin{itemize}
+    \item O espaço de iteração total ($10^9$ termos) é dividido pelo número de threads ($T$).
+    \item Cada thread recebe um ID lógico ($tid$) de $0$ a $T-1$.
+    \item O intervalo de cálculo $[I_{start}, I_{end}]$ para cada thread é determinado deterministicamente, sem necessidade de comunicação durante o cálculo.
+\end{itemize}
+
+\subsection{Eliminação de Condição de Corrida}
+Um requisito crítico do trabalho é evitar mecanismos de sincronização (como Mutexes) durante o cálculo para maximizar o desempenho. 
+Para isso, utilizou-se a técnica de **Vetores de Resultados Parciais**. Em vez de todas as threads escreverem em uma variável \texttt{global\_sum}, cada thread $i$ escreve exclusivamente na posição \texttt{resultado[i]} de um vetor global. A soma final (redução) é realizada pela thread principal (\textit{main}) após o término de todas as tarefas operárias.
+
+\section{Desenvolvimento e Implementação}
+
+\subsection{Protótipo Inicial}
+Antes de implementar a série de Leibniz, desenvolveu-se um protótipo para validar a lógica de divisão de tarefas. O código abaixo (Fig. 1) realiza a soma de inteiros em intervalos distintos para garantir que as threads operam corretamente e o vetor de resultados funciona.
+
+\begin{lstlisting}[caption={Protótipo de validação da lógica de threads (Soma de Inteiros)}, label={lst:proto}]
+// Trecho da função threadBody do protótipo
+void *threadBody(void *id) {
+    int tid = (int)(intptr_t)id;
+    // Logica simplificada para teste
+    int inicio = intervalo[tid]; 
+    int fim = inicio + PASSO - 1;
+    // ... calculo ...
+    resultado[tid] = soma; // Escrita sem mutex
+    pthread_exit(NULL);
+}
+\end{lstlisting}
+
+Este protótipo validou que a estrutura de \texttt{pthread\_join} recupera corretamente o fluxo de execução antes da soma final.
+
+\subsection{Adaptação para Série de Leibniz}
+(Aqui você inserirá o código final adaptado. Deixe este espaço reservado).
+
+\section{Resultados Esperados}
+Serão realizados testes de desempenho utilizando o comando \texttt{time} do Linux para medir o \textit{Wall Clock Time} nas configurações de 1, 2, 4 e 8 threads. Espera-se observar um \textit{Speedup} próximo ao linear até o limite de núcleos físicos da máquina utilizada.
+
+\section{Referências Bibliográficas}
+
+\noindent [1] MAZIERO, C. A. \textit{Sistemas Operacionais: Conceitos e Mecanismos}. Curitiba: DINF - UFPR, 2019. Disponível em: \url{https://wiki.inf.ufpr.br/maziero}. Acesso à Aula 05 (Implementação de Tarefas).
+
+\noindent [2] CODEVAULT. \textit{Unix Threads in C} (Playlist). YouTube. Disponível em: \url{https://youtube.com/playlist?list=PLfqABt5AS4FmuQf70psXrsMLEDQXNkLq2}.
+
+\end{document}
