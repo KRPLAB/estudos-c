@@ -11,7 +11,7 @@ Carlos Maziero, DINF/UFPR 2020
 #include <stdlib.h>
 #include <unistd.h>
 
-#define NUM_THREADS 16
+#define NUM_THREADS 4
 
 void *threadBody (void *id)
 {
