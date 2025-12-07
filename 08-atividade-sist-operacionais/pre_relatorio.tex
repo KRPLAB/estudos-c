@@ -96,6 +96,7 @@ A Série de Leibniz para $\pi$ é dada por:
 
 Para obter o valor de $\pi$, calcula-se a somatória de $N$ termos (neste trabalho, $N=10^9$) e multiplica-se o resultado final por 4.
 
+\newpage
 \section{Metodologia}
 Para o desenvolvimento da solução, foi adotada uma abordagem incremental, partindo da compreensão teórica da criação de tarefas até a implementação da lógica matemática específica.
 
@@ -119,6 +120,7 @@ O problema foi classificado como \textit{Embarrassingly Parallel} (trivilamente 
 Um requisito crítico do trabalho é evitar mecanismos de sincronização (como Mutexes) durante o cálculo para maximizar o desempenho. 
 Para isso, utilizou-se a técnica de \textbf{Vetores de Resultados Parciais}. Em vez de todas as threads escreverem em uma variável \texttt{global\_sum}, cada thread $i$ escreve exclusivamente na posição \texttt{resultado[i]} de um vetor global. A soma final (redução) é realizada pela thread principal (\textit{main}) após o término de todas as tarefas operárias.
 
+\newpage
 \section{Desenvolvimento e Implementação}
 
 \subsection{Protótipo Inicial}
@@ -276,7 +278,7 @@ void *threadBody(void *id) {
 
 A técnica de alternância de sinais evita chamadas repetidas à função \texttt{pow}, que possui overhead significativo. O ganho de desempenho foi consistente em todos os cenários de paralelização testados.
 
-
+\newpage
 \section{Análise de Desempenho e Resultados}
 Os testes foram realizados em um processador AMD Ryzen 7 5700X (8 núcleos físicos, 16 threads lógicos), com o sistema operacional Linux. O tempo foi medido utilizando o comando \texttt{time}, considerando o tempo real (\textit{real}) como métrica principal \cite{spec_trabalho}. O cálculo considerou $10^9$ termos da série de Leibniz.
 
@@ -398,6 +400,79 @@ $\pi$ Calculado (Otimizado) & 3.14159265\textbf{2590205} \\ \hline
 \end{table}
 
 
+\subsection{Análise Gráfica de Desempenho (Versão Otimizada)}
+
+A Figura \ref{fig:speedup_opt} ilustra o \textit{Speedup} obtido com a implementação final (sem a função \texttt{pow}), comparado ao ideal teórico.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            title={\textbf{Speedup Otimizado: Ryzen 7 5700X}},
+            xlabel={Número de Threads},
+            ylabel={Speedup ($S = T_1 / T_N$)},
+            xmin=1, xmax=16,
+            ymin=1, ymax=16,
+            xtick={1, 2, 4, 8, 16},
+            ytick={1, 2, 4, 8, 16},
+            legend pos=north west,
+            ymajorgrids=true,
+            grid style=dashed,
+            width=12cm,
+            height=8cm
+        ]
+        
+        % Linha de Speedup Ideal
+        \addplot[
+            color=red,
+            style=dashed,
+            mark=none,
+            line width=1pt
+        ]
+        coordinates {
+            (1,1)(16,16)
+        };
+        \addlegendentry{Speedup Ideal (Linear)}
+        
+        % Linha de Speedup Real (Dados Otimizados)
+        % T1=2.633s. Speedups calculados:
+        % 2 threads: 2.633/1.314 = 2.00
+        % 4 threads: 2.633/0.684 = 3.85
+        % 8 threads: 2.633/0.365 = 7.21
+        % 16 threads: 2.633/0.266 = 9.90
+        \addplot[
+            color=blue,
+            mark=square*,
+            line width=1pt
+        ]
+        coordinates {
+            (1,1.00)
+            (2,2.00)
+            (4,3.85)
+            (8,7.21)
+            (16,9.90)
+        };
+        \addlegendentry{Speedup Real (Otimizado)}
+        
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Curva de Speedup utilizando a lógica de alternância de sinais. Nota-se a alta eficiência até 8 threads (limite físico) e o ganho decrescente com SMT (16 threads).}
+    \label{fig:speedup_opt}
+\end{figure}
+
+\newpage
+% --- CONCLUSÃO ---
+\section{Conclusão}
+
+O presente trabalho cumpriu o objetivo de implementar e analisar uma solução paralela para o cálculo numérico de $\pi$ utilizando a biblioteca \texttt{pthreads}. Através da estratégia de decomposição de domínio, foi possível distribuir a carga de trabalho de forma equilibrada entre as unidades de processamento.
+
+A evolução do código demonstrou que a eficiência em Computação de Alto Desempenho (HPC) não depende apenas do número de threads, mas também da complexidade das instruções por ciclo. A substituição da função \texttt{pow} por uma lógica aritmética simples de alternância de sinais resultou em um ganho de desempenho significativo, reduzindo o tempo de execução sequencial em aproximadamente 71\%.
+
+A análise dos resultados no processador AMD Ryzen 7 5700X evidenciou claramente a distinção entre núcleos físicos e lógicos. Obteve-se um \textit{Speedup} quase linear (eficiência $>90\%$) até 8 threads, correspondendo aos 8 núcleos físicos da arquitetura. Entretanto, ao utilizar 16 threads (via SMT/Hyperthreading), a eficiência caiu para cerca de 62\%. Isso confirma que, para tarefas intensivas em FPU (Unidade de Ponto Flutuante), como a Série de Leibniz, o compartilhamento de recursos de hardware limita o ganho de desempenho além da contagem física de núcleos.
+
+Conclui-se, portanto, que a paralelização é uma ferramenta poderosa, mas deve ser acompanhada de otimização algorítmica e de um entendimento profundo da arquitetura de hardware subjacente para atingir seu potencial máximo.
+
+\newpage
 
 \begin{thebibliography}{9}
 
