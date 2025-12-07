@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <math.h>
 
-#define NUM_THREADS 1
+#define NUM_THREADS 8
 #define NUM_ITERACOES 1000000000
 #define PASSO (NUM_ITERACOES / NUM_THREADS)
 
@@ -15,7 +15,6 @@ void *threadBody(void *id) {
     long tid = (long)(intptr_t)id;
 
     // Cálculo dinâmico do intervalo (Decomposição de Domínio)
-    // Isso cumpre o requisito: "Divida o cálculo igualmente" [cite: 22]
     long termos_por_thread = NUM_ITERACOES / NUM_THREADS;
 
     double inicio = termos_por_thread * tid;
