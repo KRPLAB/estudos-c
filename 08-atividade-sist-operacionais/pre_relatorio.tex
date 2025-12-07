@@ -10,10 +10,33 @@
 \usepackage{listings} % Para código C
 \usepackage{xcolor}
 \usepackage{hyperref}
+\usepackage{float} % Para fixar tabelas e figuras
+\usepackage{fancyhdr} % Para o cabeçalho personalizado
 \usepackage{tikz} % Para diagramas
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
 
 % Configuração das margens
 \geometry{a4paper, left=3cm, top=3cm, right=2cm, bottom=2cm}
+
+% --- GEOMETRIA DA PÁGINA ---
+\usepackage{geometry}
+\geometry{left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+
+% --- CONFIGURAÇÃO DO CABEÇALHO ---
+\pagestyle{fancy}
+\fancyhf{} % Limpa todos os campos
+\lhead{\includegraphics[height=1.2cm]{ifpr_logo.png}} 
+\rhead{Instituto Federal do Paraná \\ Campus Pinhais}
+\renewcommand{\headrulewidth}{0.4pt}
+\setlength{\headheight}{50pt}
+
+% --- DADOS DO TRABALHO ---
+\newcommand{\aluno}{Kauan da Rosa Paulino}
+\newcommand{\disciplina}{Arquitetura e Sistemas Operacionais}
+\newcommand{\professora}{Prof. M.e. Gabriel Vinícius Canzi Candido} 
+\newcommand{\titulo}{Relatório: Cálculo de $\pi$ com Pthreads}
+\newcommand{\objeto}{Paralelismo e Otimização em CPU Multi-core}
 
 % Configuração de cores para código
 \definecolor{codegreen}{rgb}{0,0.6,0}
@@ -26,7 +49,6 @@
     commentstyle=\color{codegreen},
     keywordstyle=\color{magenta},
     numberstyle=\tiny\color{codegray},
-    stringstyle=\color{codepurple},
     basicstyle=\ttfamily\footnotesize,
     breakatwhitespace=false,         
     breaklines=true,                 
@@ -42,20 +64,30 @@
 }
 \lstset{style=mystyle}
 
-% Dados do Trabalho
-\title{\textbf{Relatório Técnico: Cálculo de $\pi$ com Pthreads}\\
-\large Trabalho 2 - Arquitetura e Sistemas Operacionais}
-\author{Seu Nome (Iniciais) \and Nome do Dupla (Iniciais)}
-\date{Dezembro de 2025}
-
+% --- INÍCIO DO DOCUMENTO ---
 \begin{document}
 
-\maketitle
+% --- CAPA SIMPLIFICADA ---
+\begin{center}
+    \vspace*{1cm}
+    \large \textbf{\titulo} \\
+    \vspace{0.5cm}
+    \normalsize Objeto de Estudo: \objeto \\
+    \vspace{2cm}
+    \textbf{Aluno:} \aluno \\
+    \textbf{Disciplina:} \disciplina \\
+    \textbf{Professor(a):} \professora \\
+    \vspace{1cm}
+    \today
+\end{center}
+
+\newpage
 \tableofcontents
 \newpage
 
+
 \section{Introdução}
-O objetivo deste trabalho é explorar o paralelismo em nível de thread (TLP) utilizando a biblioteca POSIX Threads (\texttt{pthreads}) em ambiente Linux. O problema proposto consiste no cálculo numérico da constante $\pi$ através da Série de Leibniz, utilizando precisão dupla e processamento distribuído entre múltiplos núcleos de processamento.
+O objetivo deste trabalho é explorar o paralelismo em nível de thread (TLP) utilizando a biblioteca POSIX Threads (\texttt{pthreads}) em ambiente Linux \cite{maziero_so}. O problema proposto consiste no cálculo numérico da constante $\pi$ através da Série de Leibniz, utilizando precisão dupla e processamento distribuído entre múltiplos núcleos de processamento.
 
 A Série de Leibniz para $\pi$ é dada por:
 \begin{equation}
@@ -71,11 +103,11 @@ Para o desenvolvimento da solução, foi adotada uma abordagem incremental, part
 A base teórica para a manipulação de threads foi construída a partir de duas fontes principais:
 \begin{enumerate}
     \item \textbf{Conceitos de Sistemas Operacionais:} Foram utilizadas as definições de processo leve (thread) e o modelo de memória compartilhada descritos por Maziero [1]. Especificamente, a Aula 05 serviu de guia para a estrutura básica de criação (\texttt{pthread\_create}) e junção (\texttt{pthread\_join}) de tarefas.
-    \item \textbf{Implementação Prática em C:} Para detalhes de implementação da API POSIX, consultou-se a série didática "Unix Threads in C" do canal CodeVault [2], que demonstra padrões seguros de passagem de argumentos para threads.
+    \item \textbf{Implementação Prática em C:} Para detalhes de implementação da API POSIX, consultou-se a série didática ``Unix Threads in C'' do canal CodeVault [2], que demonstra padrões seguros de passagem de argumentos para threads.
 \end{enumerate}
 
 \subsection{Estratégia de Paralelização}
-O problema foi classificado como \textit{Embarrassingly Parallel} (trivilamente paralelo), pois cada termo da série pode ser calculado independentemente dos outros. A estratégia adotada foi a **Decomposição de Domínio**:
+O problema foi classificado como \textit{Embarrassingly Parallel} (trivilamente paralelo), pois cada termo da série pode ser calculado independentemente dos outros. A estratégia adotada foi a \textbf{Decomposição de Domínio}:
 
 \begin{itemize}
     \item O espaço de iteração total ($10^9$ termos) é dividido pelo número de threads ($T$).
@@ -85,15 +117,15 @@ O problema foi classificado como \textit{Embarrassingly Parallel} (trivilamente 
 
 \subsection{Eliminação de Condição de Corrida}
 Um requisito crítico do trabalho é evitar mecanismos de sincronização (como Mutexes) durante o cálculo para maximizar o desempenho. 
-Para isso, utilizou-se a técnica de **Vetores de Resultados Parciais**. Em vez de todas as threads escreverem em uma variável \texttt{global\_sum}, cada thread $i$ escreve exclusivamente na posição \texttt{resultado[i]} de um vetor global. A soma final (redução) é realizada pela thread principal (\textit{main}) após o término de todas as tarefas operárias.
+Para isso, utilizou-se a técnica de \textbf{Vetores de Resultados Parciais}. Em vez de todas as threads escreverem em uma variável \texttt{global\_sum}, cada thread $i$ escreve exclusivamente na posição \texttt{resultado[i]} de um vetor global. A soma final (redução) é realizada pela thread principal (\textit{main}) após o término de todas as tarefas operárias.
 
 \section{Desenvolvimento e Implementação}
 
 \subsection{Protótipo Inicial}
-Antes de implementar a série de Leibniz, desenvolveu-se um protótipo para validar a lógica de divisão de tarefas. O código abaixo (Fig. 1) realiza a soma de inteiros em intervalos distintos para garantir que as threads operam corretamente e o vetor de resultados funciona.
+Antes de implementar a série de Leibniz, desenvolveu-se um protótipo para validar a lógica de divisão de tarefas. O código abaixo (Fig. 1) realiza a soma de inteiros em intervalos distintos para garantir que as threads operam corretamente e o vetor de resultados funciona. O código é uma adaptação do cógigo fornecido na Aula 05 de Maziero \cite{maziero_so}.
 
 \begin{lstlisting}[caption={Protótipo de validação da lógica de threads (Soma de Inteiros)}, label={lst:proto}]
-// Trecho da função threadBody do protótipo
+// Trecho da funcao threadBody do prototipo
 void *threadBody(void *id) {
     int tid = (int)(intptr_t)id;
     // Logica simplificada para teste
@@ -107,8 +139,10 @@ void *threadBody(void *id) {
 
 Este protótipo validou que a estrutura de \texttt{pthread\_join} recupera corretamente o fluxo de execução antes da soma final.
 
-\subsection{Adaptação para Série de Leibniz}
-\begin{lstlisting}[caption={Primeira versão do cógido readaptado para a Série de Leibniz}, label={lst:pi_thread}]
+\subsection{Versão 1: Adaptação Inicial para Série de Leibniz}
+A primeira versão funcional implementa a série de Leibniz com intervalos fixos definidos manualmente em um vetor. Esta versão utiliza a função \texttt{pow} para calcular $(-1)^n$, garantindo alternância de sinais.
+
+\begin{lstlisting}[caption={Versão 1: Código inicial com intervalos fixos e pow()}, label={lst:pi_v1}]
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -119,7 +153,7 @@ Este protótipo validou que a estrutura de \texttt{pthread\_join} recupera corre
 #define NUM_THREADS 4
 #define PASSO (1000000000.0 / NUM_THREADS)
 
-double intervalo[NUM_THREADS] = {0, 1*PASSO + 1, 2*PASSO + 1, 3*PASSO + 1};
+double intervalo[NUM_THREADS] = {0, 1*PASSO, 2*PASSO, 3*PASSO};
 double resultado_parcial[NUM_THREADS] = {0, 0, 0, 0};
 
 void *threadBody(void *id) {
@@ -133,8 +167,7 @@ void *threadBody(void *id) {
         soma += pow(-1, i) / (2.0 * i + 1.0);
     }
     resultado_parcial[tid] = soma;
-    sleep(3);
-    printf("t%02d: Soma de %.0f a %.0f é %.15f\n", tid, inicio, fim, soma);
+    printf("t%02d: Soma de %.0f a %.0f = %.15f\n", tid, inicio, fim, soma);
     pthread_exit(NULL);
 }
 
@@ -145,22 +178,19 @@ int main(int argc, char *argv[])
     int i, status;
     double soma_total = 0.0;
 
-    // para permitir a operação "join" sobre as threads
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
     for (i = 0; i < NUM_THREADS; i++) {
-        printf("Main: criando thread %02d\n", i);
-        status = pthread_create(&thread[i], &attr, threadBody, (void *)(intptr_t)i);
+        status = pthread_create(&thread[i], &attr, threadBody, 
+                               (void *)(intptr_t)i);
         if (status) {
             perror("pthread_create");
             exit(1);
         }
     }
 
-
     for (i = 0; i < NUM_THREADS; i++) {
-        printf("Main: aguardando thread %02d\n", i);
         status = pthread_join(thread[i], NULL);
         if (status) {
             perror("pthread_join");
@@ -173,20 +203,219 @@ int main(int argc, char *argv[])
     }
 
     soma_total *= 4.0;
-    printf("Resultado da série foi: %.8f\n", soma_total);
+    printf("Resultado da serie foi: %.8f\n", soma_total);
     printf("Main: fim\n");
     pthread_attr_destroy(&attr);
     pthread_exit(NULL);
 }
 \end{lstlisting}
 
-\section{Resultados Esperados}
-Serão realizados testes de desempenho utilizando o comando \texttt{time} do Linux para medir o \textit{Wall Clock Time} nas configurações de 1, 2, 4 e 8 threads. Espera-se observar um \textit{Speedup} próximo ao linear até o limite de núcleos físicos da máquina utilizada.
+\subsection{Versão 2: Particionamento Dinâmico}
+Para atender ao requisito de testes com 1, 2, 4, 8 e 16 threads sem recompilação manual, refatorou-se a lógica para o padrão SPMD (\textit{Single Program, Multiple Data}). O intervalo é calculado matematicamente em tempo de execução dentro de cada thread:
 
-\section{Referências Bibliográficas}
+\begin{equation}
+    Start_i = ID \times \left( \frac{N}{T} \right), \quad End_i = Start_i + \left( \frac{N}{T} \right) - 1
+\end{equation}
 
-\noindent [1] MAZIERO, C. A. \textit{Sistemas Operacionais: Conceitos e Mecanismos}. Curitiba: DINF - UFPR, 2019. Disponível em: \url{https://wiki.inf.ufpr.br/maziero}. Acesso à Aula 05 (Implementação de Tarefas).
+Onde $N$ é o número total de termos ($10^9$) e $T$ é o número de threads definido via macro. Esta alteração permitiu a automação dos testes de desempenho, mudando apenas a definição de \texttt{NUM\_THREADS}.
 
-\noindent [2] CODEVAULT. \textit{Unix Threads in C} (Playlist). YouTube. Disponível em: \url{https://youtube.com/playlist?list=PLfqABt5AS4FmuQf70psXrsMLEDQXNkLq2}.
+\begin{lstlisting}[caption={Versão 2: Cálculo dinâmico de intervalos (trecho relevante)}, label={lst:pi_v2}]
+void *threadBody(void *id) {
+    long tid = (long)(intptr_t)id;
+    
+    // Calculo dinamico do intervalo (Decomposicao de Dominio)
+    long termos_por_thread = NUM_ITERACOES / NUM_THREADS;
+    
+    double inicio = termos_por_thread * tid;
+    double fim = inicio + termos_por_thread - 1;
+    
+    // Ajuste para a ultima thread pegar qualquer sobra
+    if (tid == NUM_THREADS - 1) {
+        fim = NUM_ITERACOES - 1;
+    }
+    
+    double soma = 0.0;
+    
+    for (long i = inicio; i <= fim; i++) {
+        soma += pow(-1, i) / (2.0 * i + 1.0);
+    }
+    
+    resultado_parcial[tid] = soma;
+    pthread_exit(NULL);
+}
+\end{lstlisting}
 
+\subsection{Versão 3: Otimização por Alternância de Sinais}
+Para melhorar a eficiência do cálculo, a versão final eliminou o uso da função \texttt{pow} para calcular $(-1)^n$, substituindo-a por uma simples alternância de sinais dentro do loop. Esta otimização reduziu o tempo de execução em aproximadamente 71\% (de 9.27s para 2.63s com 1 thread), mantendo a mesma precisão numérica.
+
+\begin{lstlisting}[caption={Versão 3: Otimização sem pow() (trecho relevante)}, label={lst:pi_v3}]
+void *threadBody(void *id) {
+    long tid = (long)(intptr_t)id;
+    
+    long termos_por_thread = NUM_ITERACOES / NUM_THREADS;
+    double inicio = termos_por_thread * tid;
+    double fim = inicio + termos_por_thread - 1;
+    
+    if (tid == NUM_THREADS - 1) {
+        fim = NUM_ITERACOES - 1;
+    }
+    
+    double soma = 0.0;
+    // Determina o sinal inicial baseado na paridade do indice
+    double sinal = (((long)inicio % 2) == 0) ? 1.0 : -1.0;
+    
+    for (long i = inicio; i <= fim; i++) {
+        soma += sinal / (2.0 * i + 1.0);
+        sinal = -sinal;  // Alterna o sinal a cada iteracao
+    }
+    
+    resultado_parcial[tid] = soma;
+    pthread_exit(NULL);
+}
+\end{lstlisting}
+
+A técnica de alternância de sinais evita chamadas repetidas à função \texttt{pow}, que possui overhead significativo. O ganho de desempenho foi consistente em todos os cenários de paralelização testados.
+
+
+\section{Análise de Desempenho e Resultados}
+Os testes foram realizados em um processador AMD Ryzen 7 5700X (8 núcleos físicos, 16 threads lógicos), com o sistema operacional Linux. O tempo foi medido utilizando o comando \texttt{time}, considerando o tempo real (\textit{real}) como métrica principal \cite{spec_trabalho}. O cálculo considerou $10^9$ termos da série de Leibniz.
+
+Para avaliar o desempenho da solução paralela, foram realizados testes variando o número de threads de 1 até 16. Os resultados de tempo de execução e speedup estão apresentados na Tabela~\ref{tab:resultados}. O gráfico a seguir compara o speedup real obtido com o ideal teórico, evidenciando o comportamento de escalabilidade do algoritmo.
+
+A precisão do cálculo de $\pi$ também foi analisada, conforme a Tabela~\ref{tab:precisao}, que compara o valor obtido com a referência da literatura \cite{wiki_pi}.
+
+\subsection{Tabela de Tempos e Speedup}
+A Tabela \ref{tab:resultados} apresenta a média das execuções para diferentes quantidades de threads. O \textit{Speedup} ($S$) foi calculado pela razão $S = T_1 / T_N$.
+
+\begin{table}[h!]
+\centering
+\caption{Tempos de execução e Speedup obtido (com função pow)}
+\label{tab:resultados}
+
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+\textbf{Threads} & \textbf{Tempo Real (s)} & \textbf{Tempo Usuário (s)} & \textbf{Speedup ($S$)} & \textbf{Eficiência ($E$)} \\ \hline
+1  & 9.268 & 9.263  & 1.00 & 100\% \\ \hline
+2  & 4.684 & 9.335  & 1.98 & 99\%  \\ \hline
+4  & 2.427 & 9.594  & 3.82 & 95.5\% \\ \hline
+8  & 1.462 & 11.045 & 6.34 & 79.2\% \\ \hline
+16 & 1.225 & 18.613 & 7.56 & 47.2\% \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Impacto da Otimização Matemática}
+Após a remoção da função \texttt{pow} e a implementação da alternância de sinais, os testes foram repetidos. A Tabela \ref{tab:resultados_otimizado} apresenta os novos tempos de execução.
+
+\begin{table}[h!]
+\centering
+\caption{Tempos e Speedup - Versão Otimizada (Sem função pow)}
+\label{tab:resultados_otimizado}
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+\textbf{Threads} & \textbf{Tempo Real (s)} & \textbf{Tempo Usuário (s)} & \textbf{Speedup ($S$)} & \textbf{Eficiência ($E$)} \\ \hline
+1  & 2.633 & 2.630 & 1.00 & 100\%   \\ \hline
+2  & 1.314 & 2.622 & 2.00 & 100\%   \\ \hline
+4  & 0.684 & 2.711 & 3.85 & 96.2\%  \\ \hline
+8  & 0.365 & 2.875 & 7.21 & 90.1\%  \\ \hline
+16 & 0.266 & 3.301 & 9.90 & 61.9\%  \\ \hline
+\end{tabular}
+\end{table}
+
+Nota-se uma redução drástica no tempo base (1 thread) de 9.26s para 2.63s. Além disso, a eficiência com 16 threads subiu de 47\% (versão com \texttt{pow}) para 61.9\% (versão otimizada), indicando que a menor complexidade das instruções por ciclo permitiu um melhor aproveitamento do \textit{Hyperthreading} do processador Ryzen.
+
+\subsection{Gráfico de Speedup}
+A Figura~\ref{fig:speedup} apresenta a comparação entre o speedup obtido experimentalmente e o speedup ideal (linear). Observa-se que até 4 threads o comportamento é próximo do ideal, com degradação progressiva conforme aumenta o número de threads.
+
+\begin{figure}[h!]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    xlabel={Número de Threads},
+    ylabel={Speedup},
+    xmin=0, xmax=17,
+    ymin=0, ymax=17,
+    xtick={0,2,4,6,8,10,12,14,16},
+    ytick={0,2,4,6,8,10,12,14,16},
+    legend pos=north west,
+    ymajorgrids=true,
+    grid style=dashed,
+    width=12cm,
+    height=8cm
+]
+
+\addplot[
+    color=blue,
+    mark=square,
+    thick
+]
+coordinates {
+    (1,1.00)(2,1.98)(4,3.82)(8,6.34)(16,7.56)
+};
+\addlegendentry{Speedup Real}
+
+\addplot[
+    color=red,
+    mark=none,
+    dashed,
+    thick
+]
+coordinates {
+    (1,1)(16,16)
+};
+\addlegendentry{Speedup Ideal}
+
+\end{axis}
+\end{tikzpicture}
+\caption{Comparação entre Speedup Real e Ideal}
+\label{fig:speedup}
+\end{figure}
+
+\subsection{Discussão dos Resultados}
+
+\textbf{Escalabilidade Linear (1 a 4 Threads):}
+Observa-se um ganho de desempenho quase linear até 4 threads. O speedup de 3.82 com 4 threads indica uma eficiência excelente, demonstrando que o problema é altamente paralelizável e que a estratégia de divisão de vetor foi eficaz, com pouco overhead de criação de threads.
+
+\textbf{Limite Físico (8 Threads):}
+Com 8 threads, o tempo cai para 1.46s. O speedup de 6.34 ainda é expressivo, mas a eficiência cai para 79\%. Isso ocorre porque, embora o processador tenha 8 núcleos físicos, o aumento da gestão de threads e o compartilhamento de recursos do sistema (barramento, cache) começam a impactar o ganho puro.
+
+\textbf{Hyperthreading e Saturação (16 Threads):}
+Ao utilizar 16 threads, o ganho foi marginal (tempo de 1.46s para 1.22s). O processador AMD Ryzen 7 5700X possui tecnologia SMT (\textit{Simultaneous Multithreading}), simulando 16 núcleos lógicos. No entanto, como o cálculo da série de Leibniz faz uso intensivo da Unidade de Ponto Flutuante (FPU), e cada núcleo físico possui apenas um conjunto de FPUs compartilhado entre suas duas threads lógicas, não há duplicação real de capacidade de processamento matemático. Ocorre apenas um melhor aproveitamento dos ciclos ociosos, resultando em um ganho modesto.
+
+\subsection{Precisão Numérica Obtida}
+A Tabela~\ref{tab:precisao} apresenta a comparação entre o valor calculado de $\pi$ e o valor de referência, evidenciando a alta precisão do método mesmo com paralelização. Em todas as execuções, a precisão manteve-se consistente, convergindo para o valor esperado com erro absoluto da ordem de $10^{-9}$.
+
+\begin{table}[h!]
+\centering
+\caption{Precisão Numérica Obtida (1 bilhão de termos)}
+\label{tab:precisao}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Fonte} & \textbf{Valor} \\ \hline
+$\pi$ Referência (Wikipedia) \cite{wiki_pi} & 3.14159265\textbf{3589793} \\ \hline
+$\pi$ Calculado (Otimizado) & 3.14159265\textbf{2590205} \\ \hline
+\textbf{Erro Absoluto} & $0.000000000999588$ \\ \hline
+\end{tabular}
+\end{table}
+
+
+
+\begin{thebibliography}{9}
+
+% Referência do PDF do Trabalho
+\bibitem{spec_trabalho}
+INSTITUTO FEDERAL DO PARANÁ (IFPR). \textit{Trabalho 2: Sistemas Operacionais - O cálculo de $\pi$}. Especificação técnica. Pinhais: Bacharelado em Ciência da Computação, 2025.
+
+% Referência da Wikipedia (citada no PDF original na fonte 36)
+\bibitem{wiki_pi}
+WIKIPEDIA. \textit{Pi}. Disponível em: $<$https://pt.wikipedia.org/wiki/Pi$>$. Acesso em: 06 dez. 2025.
+
+% Referência do Livro do Maziero
+\bibitem{maziero_so}
+MAZIERO, Carlos A. \textit{Sistemas Operacionais: Conceitos e Mecanismos}. Curitiba: DINF - UFPR, 2019. Disponível em: $<$https://wiki.inf.ufpr.br/maziero$>$.
+
+% Referência do CodeVault
+\bibitem{codevault}
+CODEVAULT. \textit{Unix Threads in C}. Playlist de Vídeos. YouTube, 2020. Disponível em: $<$https://youtube.com/playlist?list=PLfqABt5AS4FmuQf70psXrsMLEDQXNkLq2$>$.
+
+\end{thebibliography}
 \end{document}
