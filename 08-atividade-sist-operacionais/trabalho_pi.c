@@ -27,9 +27,11 @@ void *threadBody(void *id) {
     }
 
     double soma = 0.0;
+    double sinal = (((long)inicio % 2) == 0) ? 1.0 : -1.0;
 
     for (long i = inicio; i <= fim; i++) {
-        soma += pow(-1, i) / (2.0 * i + 1.0);
+        soma += sinal / (2.0 * i + 1.0);
+        sinal = -sinal;
     }
 
     resultado_parcial[tid] = soma;
