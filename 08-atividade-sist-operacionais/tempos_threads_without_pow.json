@@ -1,0 +1,49 @@
+{
+  "tempos": [
+    {
+      "num_threads": 1,
+      "real": "0m2,633s",
+      "user": "0m2,630s",
+      "sys": "0m0,003s",
+      "pi_estimado": 3.141592652588050,
+      "pi_referencia": 3.141592653589793,
+      "pi_ref_url": "https://pt.wikipedia.org/wiki/Pi"
+    },
+    {
+      "num_threads": 2,
+      "real": "0m1,314s",
+      "user": "0m2,622s",
+      "sys": "0m0,002s",
+      "pi_estimado": 3.141592652589258,
+      "pi_referencia": 3.141592653589793,
+      "pi_ref_url": "https://pt.wikipedia.org/wiki/Pi"
+    },
+    {
+      "num_threads": 4,
+      "real": "0m0,684s",
+      "user": "0m2,711s",
+      "sys": "0m0,005s",
+      "pi_estimado": 3.141592652589210,
+      "pi_referencia": 3.141592653589793,
+      "pi_ref_url": "https://pt.wikipedia.org/wiki/Pi"
+    },
+    {
+      "num_threads": 8,
+      "real": "0m0,365s",
+      "user": "0m2,875s",
+      "sys": "0m0,001s",
+      "pi_estimado": 3.141592652589324,
+      "pi_referencia": 3.141592653589793,
+      "pi_ref_url": "https://pt.wikipedia.org/wiki/Pi"
+    },
+    {
+      "num_threads": 16,
+      "real": "0m0,266s",
+      "user": "0m3,301s",
+      "sys": "0m0,010s",
+      "pi_estimado": 3.141592652590205,
+      "pi_referencia": 3.141592653589793,
+      "pi_ref_url": "https://pt.wikipedia.org/wiki/Pi"
+    }
+  ]
+}
