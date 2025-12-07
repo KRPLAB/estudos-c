@@ -10,51 +10,52 @@ Carlos Maziero, DINF/UFPR 2020
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdint.h>
 
 #define NUM_THREADS 4
 
 void *threadBody (void *id)
 {
-  int tid = (int) id ;
+  int tid = (int)(intptr_t)id;
 
-  printf ("t%02ld: Olá!\n", tid) ;
-  sleep (3) ;   
-  printf ("t%02ld: Tchau!\n", tid) ;
-  pthread_exit (NULL) ;
+  printf ("t%02ld: Olá!\n", tid);
+  sleep (3);   
+  printf ("t%02ld: Tchau!\n", tid);
+  pthread_exit (NULL);
 }
 
 int main (int argc, char *argv[])
 {
-  pthread_t thread [NUM_THREADS] ;
-  pthread_attr_t attr ;   
-  int i, status ;
+  pthread_t thread [NUM_THREADS];
+  pthread_attr_t attr;   
+  int i, status;
 
   // para permitir a operação "join" sobre as threads   
-  pthread_attr_init (&attr) ;
-  pthread_attr_setdetachstate (&attr, PTHREAD_CREATE_JOINABLE) ;
+  pthread_attr_init (&attr);
+  pthread_attr_setdetachstate (&attr, PTHREAD_CREATE_JOINABLE);
 
   for (i=0; i<NUM_THREADS; i++)
   {
-    printf ("Main: criando thread %02ld\n", i) ;      
-    status = pthread_create (&thread[i], &attr, threadBody, (void *) i) ;
+    printf ("Main: criando thread %02ld\n", i);      
+    status = pthread_create (&thread[i], &attr, threadBody, (void *) i);
     if (status)
     {
-      perror ("pthread_create") ;
-      exit (1) ;
+      perror ("pthread_create");
+      exit (1);
     }
   }
    
   for (i=0; i<NUM_THREADS; i++)
   {
     printf ("Main: aguardando thread %02ld\n", i);
-    status = pthread_join (thread[i], NULL) ;
+    status = pthread_join (thread[i], NULL);
     if (status)
     {
-      perror ("pthread_join") ;
-      exit (1) ;
+      perror ("pthread_join");
+      exit (1);
     }
   }
-  printf ("Main: fim\n") ;
-  pthread_attr_destroy (&attr) ;   
-  pthread_exit (NULL) ;
+  printf ("Main: fim\n");
+  pthread_attr_destroy (&attr);   
+  pthread_exit (NULL);
 }
