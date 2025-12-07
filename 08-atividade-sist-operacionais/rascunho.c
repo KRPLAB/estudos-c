@@ -3,26 +3,27 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <math.h>
 
 #define NUM_THREADS 4
-#define PASSO 25
+#define PASSO (1000000000.0 / NUM_THREADS)
 
-int intervalo[NUM_THREADS] = {1, 26, 51, 76};
-int resultado_parcial[NUM_THREADS] = {0, 0, 0, 0};
+double intervalo[NUM_THREADS] = {0, 1*PASSO + 1, 2*PASSO + 1, 3*PASSO + 1};
+double resultado_parcial[NUM_THREADS] = {0, 0, 0, 0};
 
 void *threadBody(void *id) {
     int tid = (int)(intptr_t)id;
 
-    int inicio = intervalo[tid];
-    int fim = inicio + PASSO - 1;
-    int soma = 0;
+    double inicio = intervalo[tid];
+    double fim = inicio + PASSO - 1;
+    double soma = 0.0;
 
     for (int i = inicio; i <= fim; i++) {
-        soma += i;
+        soma += pow(-1, i) / (2.0 * i + 1.0);
     }
     resultado_parcial[tid] = soma;
     sleep(3);
-    printf("t%02d: Soma de %d a %d é %d\n", tid, inicio, fim, soma);
+    printf("t%02d: Soma de %.0f a %.0f é %.15f\n", tid, inicio, fim, soma);
     pthread_exit(NULL);
 }
 
@@ -31,7 +32,7 @@ int main(int argc, char *argv[])
     pthread_t thread[NUM_THREADS];
     pthread_attr_t attr;
     int i, status;
-    int soma_total = 0;
+    double soma_total = 0.0;
 
     // para permitir a operação "join" sobre as threads
     pthread_attr_init(&attr);
@@ -46,6 +47,7 @@ int main(int argc, char *argv[])
         }
     }
 
+
     for (i = 0; i < NUM_THREADS; i++) {
         printf("Main: aguardando thread %02d\n", i);
         status = pthread_join(thread[i], NULL);
@@ -54,10 +56,13 @@ int main(int argc, char *argv[])
             exit(1);
         }
     }
+
     for (i = 0; i < NUM_THREADS; i++) {
         soma_total += resultado_parcial[i];
     }
-    printf("Soma total de 1 a 100 é %d\n", soma_total);
+
+    soma_total *= 4.0;
+    printf("Resultado da série foi: %.8f\n", soma_total);
     printf("Main: fim\n");
     pthread_attr_destroy(&attr);
     pthread_exit(NULL);
