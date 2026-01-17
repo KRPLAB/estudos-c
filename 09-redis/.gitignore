@@ -1,0 +1,8 @@
+# Ignorar arquivos binários e bibliotecas estáticas
+*.o
+*.a
+*.so
+*.out
+*.exe
+*.bin
+redis-server
