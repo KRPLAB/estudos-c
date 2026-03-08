@@ -1,6 +1,6 @@
 # Makefile (Raiz)
 
-SUBDIRS = lib/basic cmd/server
+SUBDIRS = lib/basic lib/network cmd/server
 
 .PHONY: all clean $(SUBDIRS)
 
