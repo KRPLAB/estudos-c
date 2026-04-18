@@ -79,13 +79,21 @@ void net_tcp_run(net_ctx_t *ctx, int client_socket,
 		}
 
 		buffer[bytes_recebidos] = '\0';
-
+		
 		// Exibe requisição para debug
 		printf("[TCP] Requisição recebida:\n%s\n", buffer);
+		
+		char method_str[16] = {0};
+        char path_str[256] = {0};
+        char protocol_str[16] = {0};
 
-		// Identifica método da requisição
-		char *first_line = tokenize(buffer, "\r\n");
-		int metodo = identify_method(first_line);
+		if (sscanf(buffer, "%15s %255s %15s", method_str, path_str, protocol_str) != 3) {
+            printf("[TCP_ERROR] Requisição HTTP malformada.\n");
+            close(client_socket);
+            continue;
+        }
+
+		int metodo = identify_method(method_str);
 
 		if (metodo == UNKNOWN) {
 			const char *bad_request =
@@ -96,37 +104,57 @@ void net_tcp_run(net_ctx_t *ctx, int client_socket,
 			continue;
 		}
 
+		if (strstr(path_str, "..") != NULL) {
+            printf("[SECURITY] Tentativa de Path Traversal bloqueada: %s\n", path_str);
+            const char *forbidden = "HTTP/1.1 403 Forbidden\r\n\r\n403 Acesso Negado.";
+            send(client_socket, forbidden, strlen(forbidden), 0);
+            close(client_socket);
+            continue;
+        }
+
+		char filepath[SIZE_FILEPATH];
+		const char *base_dir = BASE_DIR;
+
+		if (strcmp(path_str, "/") == 0) {
+			snprintf(filepath, sizeof(filepath), "%sindex.html", base_dir);
+		} else {
+			snprintf(filepath, sizeof(filepath), "%s%s", base_dir, path_str + 1);
+		}
+
 		// Tenta abrir o arquivo index.html
-		FILE *file = fopen("../../assets/html/index.html", "r");
+		FILE *file = fopen(filepath, "r");
 
 		if (file) {
 			// Envia cabeçalho HTTP 200 OK
-			const char *header =
-				"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
+			const char *header = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
 			send(client_socket, header, strlen(header), 0);
 
 			// Envia conteúdo do arquivo em blocos
 			char content[BUFFER_SIZE];
 			int bytes;
 			while ((bytes = fread(content, 1, BUFFER_SIZE, file)) > 0) {
-				send(client_socket, content, bytes, 0);
+				if (send(client_socket, content, bytes, 0) < 0) {
+                    perror("[TCP_ERROR] Falha ao enviar dados do arquivo");
+                    break; 
+                }
 			}
 
 			fclose(file);
 		} else {
-			// Se não achar index.html, envia erro 404
+			printf("[TCP] Arquivo nao encontrado. Retornando 404.\n");
 			FILE *error_file = fopen("../../assets/html/erro.html", "r");
 
-			const char *not_found =
-				"HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\n\r\n";
+			const char *not_found = "HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\n\r\n";
 			send(client_socket, not_found, strlen(not_found), 0);
 
 			if (error_file) {
 				char content[BUFFER_SIZE];
 				int bytes;
-				while ((bytes = fread(content, 1, BUFFER_SIZE, error_file)) >
-					   0) {
-					send(client_socket, content, bytes, 0);
+				while ((bytes = fread(content, 1, BUFFER_SIZE, error_file)) > 0) {
+					if (send(client_socket, content, bytes, 0) < 0) {
+						perror("[TCP_ERROR] Falha ao enviar dados do arquivo de erro");
+						break;
+					}
 				}
 				fclose(error_file);
 			}

@@ -6,6 +6,8 @@
 
 #define BUFFER_SIZE 4096
 #define PORT 8080
+#define BASE_DIR "../../assets/html/"
+#define SIZE_FILEPATH 512
 
 typedef struct {
     int server_socket;
