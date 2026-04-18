@@ -3,6 +3,7 @@
 #include <asm-generic/socket.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -12,6 +13,7 @@
 #include "../../include/common.h"
 #include "../../include/network.h"
 #include "../../include/utils.h"
+#include "../../include/cJSON.h"
 
 int net_tcp_setup(net_ctx_t *ctx, int port) {
 	int opt = 1;
@@ -149,12 +151,64 @@ void net_tcp_run(net_ctx_t *ctx, int client_socket,
 				// Garantir terminação da string para debug
 				json_body[content_length] = '\0';
 
+
 				printf("[TCP] POST Recebido. Body completo:\n%s\n", json_body);
 
-				const char *res =
-					"HTTP/1.1 201 Created\r\nContent-Length: 0\r\n\r\n";
-				int len_res = strlen(res);
-				utils_send_all(client_socket, (char *)res, &len_res);
+				// 1. Tenta fazer o parse da string para uma estrutura cJSON
+				cJSON *json_recebido = cJSON_Parse(json_body);
+				if (json_recebido == NULL) {
+					const char *error_ptr = cJSON_GetErrorPtr();
+					if (error_ptr != NULL) {
+						fprintf(stderr, "[JSON_ERROR] Erro de formatação antes de: %s\n", error_ptr);
+					}
+					// Resposta HTTP 400 em caso de JSON malformado
+					const char *bad_json = "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n";
+					int len_bad = strlen(bad_json);
+					utils_send_all(client_socket, (char *)bad_json, &len_bad);
+				} else {
+					// 2. Extrai os campos "chave" e "valor" do JSON
+					cJSON *chave_item = cJSON_GetObjectItemCaseSensitive(json_recebido, "chave");
+					cJSON *valor_item = cJSON_GetObjectItemCaseSensitive(json_recebido, "valor");
+
+					// Verifica se os campos existem e se são strings
+					if (cJSON_IsString(chave_item) && (chave_item->valuestring != NULL) &&
+						cJSON_IsString(valor_item) && (valor_item->valuestring != NULL)) {
+
+						printf("[REDIS-LIKE] Comando SET recebido: [%s] -> [%s]\n", 
+							   chave_item->valuestring, valor_item->valuestring);
+
+						// 3. Monta um JSON de resposta dinâmica
+						cJSON *json_resposta = cJSON_CreateObject();
+						cJSON_AddStringToObject(json_resposta, "status", "sucesso");
+						cJSON_AddStringToObject(json_resposta, "acao", "chave registrada");
+						// Converte o objeto cJSON de volta para string
+						char *string_resposta = cJSON_PrintUnformatted(json_resposta);
+
+						// 4. Cria o cabeçalho HTTP completo com a resposta
+						char response_http[1024];
+						snprintf(response_http, sizeof(response_http),
+								 "HTTP/1.1 201 Created\r\n"
+								 "Content-Type: application/json\r\n"
+								 "Content-Length: %zu\r\n"
+								 "Connection: close\r\n\r\n"
+								 "%s", strlen(string_resposta), string_resposta);
+
+						int len_res = strlen(response_http);
+						utils_send_all(client_socket, response_http, &len_res);
+
+						// 5. LIMPEZA DA MEMÓRIA (CRÍTICO)
+						free(string_resposta);
+						cJSON_Delete(json_resposta);
+					} else {
+						// Resposta caso os campos esperados não estejam presentes
+						const char *bad_format = "HTTP/1.1 422 Unprocessable Entity\r\nContent-Length: 0\r\n\r\n";
+						int len_bad_fmt = strlen(bad_format);
+						utils_send_all(client_socket, (char *)bad_format, &len_bad_fmt);
+					}
+					// Limpeza da árvore recebida
+					cJSON_Delete(json_recebido);
+				}
+
 				close(client_socket);
 				continue;
 

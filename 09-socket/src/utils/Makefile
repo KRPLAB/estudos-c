@@ -3,9 +3,10 @@
 
 include ../../config/config.mk
 
+
 # Caminhos corrigidos
 ROOT_BUILD_DIR = ../../build
-SRCS = utils.c
+SRCS = utils.c cJSON.c
 OBJS = $(ROOT_BUILD_DIR)/obj/utils/$(SRCS:.c=.o)
 TARGET = $(ROOT_BUILD_DIR)/.utils.a
 
