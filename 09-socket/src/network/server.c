@@ -126,7 +126,7 @@ void net_tcp_run(net_ctx_t *ctx, int client_socket,
 
 		char json_body[8192] = {0};
 		if (metodo == POST || metodo == PUT) {
-			if (content_length > 0 && content_length < sizeof(json_body)) {
+			if (content_length > 0 && content_length < (int)sizeof(json_body)) {
 				if (body_bytes_recebidos > 0) {
 					memcpy(json_body, body_ptr, body_bytes_recebidos);
 				}
@@ -158,7 +158,7 @@ void net_tcp_run(net_ctx_t *ctx, int client_socket,
 				close(client_socket);
 				continue;
 
-			} else if (content_length >= sizeof(json_body)) {
+			} else if (content_length >= (int)sizeof(json_body)) {
 				printf("[TCP_ERROR] Payload muito grande!\n");
 				const char *res = "HTTP/1.1 413 Payload Too Large\r\n\r\n";
 				int len_res = strlen(res);
