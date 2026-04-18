@@ -6,6 +6,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <sys/time.h>
 
 // bibliotecas do projeto
 #include "../../include/common.h"
@@ -66,6 +67,15 @@ void net_tcp_run(net_ctx_t *ctx, int client_socket,
 			continue;
 		}
 
+		// Configura timeout de recepção para evitar bloqueio indefinido
+		struct timeval tv;
+        tv.tv_sec = 5;  // 5 Segundos de limite
+        tv.tv_usec = 0; // 0 Microsegundos
+
+		if (setsockopt(client_socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
+            perror("[TCP_ERROR] Falha ao configurar timeout no cliente");
+        }
+
 		// Recebe requisição do cliente
 		int bytes_recebidos = recv(client_socket, buffer, BUFFER_SIZE - 1, 0);
 		if (bytes_recebidos < 0) {
@@ -125,9 +135,21 @@ void net_tcp_run(net_ctx_t *ctx, int client_socket,
 		FILE *file = fopen(filepath, "r");
 
 		if (file) {
-			// Envia cabeçalho HTTP 200 OK
-			const char *header = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
-			send(client_socket, header, strlen(header), 0);
+			// Obtém tamanho do arquivo para criar cabeçalho HTTP adequado
+			fseek(file, 0, SEEK_END);
+            long file_size = ftell(file);
+            rewind(file);
+
+			char header[512];
+            snprintf(header, sizeof(header),
+                     "HTTP/1.1 200 OK\r\n"
+                     "Content-Type: text/html; charset=utf-8\r\n"
+                     "Content-Length: %ld\r\n"
+                     "Server: C-Server-Plan9\r\n"
+                     "Connection: close\r\n"
+                     "\r\n", file_size);
+
+            send(client_socket, header, strlen(header), 0);
 
 			// Envia conteúdo do arquivo em blocos
 			char content[BUFFER_SIZE];
@@ -148,6 +170,7 @@ void net_tcp_run(net_ctx_t *ctx, int client_socket,
 			send(client_socket, not_found, strlen(not_found), 0);
 
 			if (error_file) {
+
 				char content[BUFFER_SIZE];
 				int bytes;
 				while ((bytes = fread(content, 1, BUFFER_SIZE, error_file)) > 0) {
