@@ -1,4 +1,4 @@
-// bibliotecas padrão 
+// bibliotecas padrão
 #include <arpa/inet.h>
 #include <asm-generic/socket.h>
 #include <errno.h>
@@ -8,8 +8,8 @@
 #include <unistd.h>
 
 // bibliotecas do projeto
-#include "../../include/network.h"
 #include "../../include/common.h"
+#include "../../include/network.h"
 #include "../../include/utils.h"
 
 int net_tcp_setup(net_ctx_t *ctx, int port) {
@@ -24,23 +24,23 @@ int net_tcp_setup(net_ctx_t *ctx, int port) {
 	}
 
 	// Permite reutilizar a porta imediatamente após o fechamento
-	if (setsockopt(ctx->server_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+	if (setsockopt(ctx->server_socket, SOL_SOCKET, SO_REUSEADDR, &opt,
+				   sizeof(opt)) < 0) {
 		perror("[TCP_SETUP_ERROR] Falha ao configurar socket TCP");
 		return -1;
 	}
 
 	// Configura endereço do servidor
-	struct sockaddr_in server_addr = {
-		.sin_family = AF_INET,
-		.sin_addr.s_addr = INADDR_ANY,
-		.sin_port = htons(port)
-	};
+	struct sockaddr_in server_addr = {.sin_family = AF_INET,
+									  .sin_addr.s_addr = INADDR_ANY,
+									  .sin_port = htons(port)};
 
-	if (bind(ctx->server_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+	if (bind(ctx->server_socket, (struct sockaddr *)&server_addr,
+			 sizeof(server_addr)) < 0) {
 		perror("[TCP_SETUP_ERROR] Erro ao associar socket ao endereço");
 		return -1;
 	}
-	
+
 	if (listen(ctx->server_socket, 10) < 0) {
 		perror("[TCP_SETUP_ERROR] Erro ao iniciar escuta TCP");
 		return -1;
@@ -50,13 +50,16 @@ int net_tcp_setup(net_ctx_t *ctx, int port) {
 	return 0;
 }
 
-void net_tcp_run(net_ctx_t *ctx, int client_socket, struct sockaddr_in client_addr, socklen_t client_len, char *buffer) {
+void net_tcp_run(net_ctx_t *ctx, int client_socket,
+				 struct sockaddr_in client_addr, socklen_t client_len,
+				 char *buffer) {
 	ctx->running = 1;
 	printf("[TCP] Servidor aguardando conexões na porta %d...\n", ctx->port);
 
 	while (ctx->running) {
 		// Aceita conexão do cliente (bloqueante)
-		client_socket = accept(ctx->server_socket, (struct sockaddr *)&client_addr, &client_len);
+		client_socket = accept(ctx->server_socket,
+							   (struct sockaddr *)&client_addr, &client_len);
 
 		if (client_socket < 0) {
 			perror("[TCP_ERROR] Erro ao aceitar conexão");
@@ -65,6 +68,16 @@ void net_tcp_run(net_ctx_t *ctx, int client_socket, struct sockaddr_in client_ad
 
 		// Recebe requisição do cliente
 		int bytes_recebidos = recv(client_socket, buffer, BUFFER_SIZE - 1, 0);
+		if (bytes_recebidos < 0) {
+			perror("[TCP ERROR] Falha ao receber dados (recv retornou -1\n)");
+			close(client_socket);
+			continue;
+		} else if (bytes_recebidos == 0) {
+			printf("[TCP] Cliente fechou a conexão inesperadamente.\n");
+			close(client_socket);
+			continue;
+		}
+
 		buffer[bytes_recebidos] = '\0';
 
 		// Exibe requisição para debug
@@ -84,7 +97,7 @@ void net_tcp_run(net_ctx_t *ctx, int client_socket, struct sockaddr_in client_ad
 		}
 
 		// Tenta abrir o arquivo index.html
-		FILE *file = fopen("assets/html/index.html", "r");
+		FILE *file = fopen("../../assets/html/index.html", "r");
 
 		if (file) {
 			// Envia cabeçalho HTTP 200 OK
@@ -102,7 +115,7 @@ void net_tcp_run(net_ctx_t *ctx, int client_socket, struct sockaddr_in client_ad
 			fclose(file);
 		} else {
 			// Se não achar index.html, envia erro 404
-			FILE *error_file = fopen("assets/html/erro.html", "r");
+			FILE *error_file = fopen("../../assets/html/erro.html", "r");
 
 			const char *not_found =
 				"HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\n\r\n";
@@ -111,7 +124,8 @@ void net_tcp_run(net_ctx_t *ctx, int client_socket, struct sockaddr_in client_ad
 			if (error_file) {
 				char content[BUFFER_SIZE];
 				int bytes;
-				while ((bytes = fread(content, 1, BUFFER_SIZE, error_file)) > 0) {
+				while ((bytes = fread(content, 1, BUFFER_SIZE, error_file)) >
+					   0) {
 					send(client_socket, content, bytes, 0);
 				}
 				fclose(error_file);

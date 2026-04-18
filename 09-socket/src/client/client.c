@@ -16,7 +16,33 @@ int client_http_connect(client_ctx_t *ctx, const char *host, int port) {
 		return -1;
 	}
 
-	// Cria socket TCP IPv4
+	if (port <= 0 || port > 65535) {
+		fprintf(stderr, "[CLIENT_ERROR] Porta inválida: %d\n", port);
+		return -1;
+	}
+
+	// garante estado limpo
+	memset(&ctx->server, 0, sizeof(ctx->server));
+	ctx->socket = -1;
+
+	// configura família e porta PRIMEIRO
+	ctx->server.sin_family = AF_INET;
+	ctx->server.sin_port = htons(port);
+
+	// converte IP (apenas IPv4)
+	int ret = inet_pton(AF_INET, host, &ctx->server.sin_addr);
+
+	if (ret == 0) {
+		fprintf(stderr, "[CLIENT_ERROR] IP inválido: %s\n", host);
+		return -1;
+	}
+
+	if (ret < 0) {
+		perror("[CLIENT_ERROR] inet_pton falhou");
+		return -1;
+	}
+
+	// cria socket TCP
 	ctx->socket = socket(AF_INET, SOCK_STREAM, 0);
 
 	if (ctx->socket < 0) {
@@ -24,21 +50,13 @@ int client_http_connect(client_ctx_t *ctx, const char *host, int port) {
 		return -1;
 	}
 
-	// Configura endereço do servidor
-	ctx->server.sin_family = AF_INET;
-	ctx->server.sin_port = htons(port);
-
-	// Converte o host (IP) para formato binário
-	if (inet_pton(AF_INET, host, &ctx->server.sin_addr) <= 0) {
-		perror("[CLIENT_ERROR] Endereço IP inválido");
-		close(ctx->socket);
-		return -1;
-	}
-
-	// Conecta ao servidor
-	if (connect(ctx->socket, (struct sockaddr *)&ctx->server, sizeof(ctx->server)) < 0) {
+	// conecta ao servidor (dispara handshake TCP)
+	if (connect(ctx->socket,
+				(struct sockaddr *)&ctx->server,
+				sizeof(ctx->server)) < 0) {
 		perror("[CLIENT_ERROR] Falha ao conectar ao servidor");
 		close(ctx->socket);
+		ctx->socket = -1;
 		return -1;
 	}
 
@@ -54,20 +72,27 @@ int client_http_send_get(client_ctx_t *ctx, const char *path, const char *host) 
 
 	// Monta requisição HTTP GET
 	char request[512];
-	snprintf(request, sizeof(request),
-			 "GET %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n",
-			 path, host);
+	int request_len = snprintf(request, sizeof(request),
+             "GET %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n",
+             path, host);
 
 	// Envia requisição
-	int bytes_sent = send(ctx->socket, request, strlen(request), 0);
+    int total_sent = 0;
 
-	if (bytes_sent < 0) {
-		perror("[CLIENT_ERROR] Falha ao enviar requisição");
-		return -1;
-	}
+    while (total_sent < request_len) {
+        int bytes_sent = send(ctx->socket, request + total_sent, request_len - total_sent, 0);
 
-	printf("[CLIENT] Requisição enviada (%d bytes)\n", bytes_sent);
-	return bytes_sent;
+        if (bytes_sent == -1) {
+            perror("[CLIENT ERROR] Falha ao enviar dados");
+            close(ctx->socket);
+            return -1;
+        }
+
+        total_sent += bytes_sent;
+        printf("[CLIENT] Enviados %d bytes... Total: %d/%d\n", bytes_sent, total_sent, request_len);
+    }
+
+    return total_sent;
 }
 
 int client_http_recv(client_ctx_t *ctx, char *buffer, int buffer_size) {
