@@ -1,24 +1,49 @@
+#include "../../include/network.h"
 #include <stdio.h>
-#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
-#include "../../include/common.h"
 
-int main() {
-    // Porta padrão para o servidor HTTP. Se for raw socket pode comentar essa linha
-    // int port = 8080;
-    // printf("[MAIN] Iniciando o servidor na porta %d...\n", port);
-
-    printf("[MAIN] Iniciando o servidor raw socket...\n");
-
-    // int server_fd = net_server_start(port);
-    int server_fd = net_raw_socket_start();
-
-    if (server_fd == -1) {
-        exit(EXIT_FAILURE);
+int main(int argc, char *argv[]) {
+    if (argc < 2) {
+        printf("Uso: %s [tcp|raw]\n", argv[0]);
+        return 1;
     }
 
-    close(server_fd);
-    printf("[MAIN] Servidor encerrado.\n");
+    if (strcmp(argv[1], "tcp") == 0) {
+        net_ctx_t server;
+        int client_socket = 0;
+        struct sockaddr_in client_addr;
+        socklen_t client_len = sizeof(client_addr);
+        char buffer[BUFFER_SIZE];
+        int port;
+        
+        printf("Porta atual: %d\n", PORT);
+        printf("Deseja alterar a porta? (s/n): ");
+        char choice = getchar();
+        if (choice == 's' || choice == 'S') {
+            printf("Digite a nova porta: ");
+            if (scanf("%d", &port) != 1) {
+                fprintf(stderr, "[ERRO] Entrada inválida para porta\n");
+                fprintf(stdout, "Usando porta padrão.\n");
+                port = PORT;
+            }
+        } else {
+            port = PORT;
+        }
+
+        if (net_tcp_setup(&server, port) == 0) {
+            net_tcp_run(&server, client_socket, client_addr, client_len, buffer);
+            close(server.server_socket);
+        }
+    } 
+    else if (strcmp(argv[1], "raw") == 0) {
+        if (net_raw_run() == -1) return 1;
+    } 
+    else {
+        printf("Opção inválida.\n");
+        return 1;
+    }
 
     return 0;
 }
+

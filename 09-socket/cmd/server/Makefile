@@ -1,19 +1,28 @@
 # cmd/server/Makefile
-include ../../config.mk
+# Compilação do servidor HTTP
 
-TARGET = redis-server
-OBJS = main.o
+include ../../config/config.mk
 
-# Bibliotecas necessárias (caminho relativo)
-LIBS = ../../lib/basic/libbasic.a ../../lib/network/libnetwork.a
+# Caminhos corrigidos
+ROOT_BUILD_DIR = ../../build
+SRCS = main.c
+OBJS = $(ROOT_BUILD_DIR)/obj/cmd/server/$(SRCS:.c=.o)
+TARGET = $(ROOT_BUILD_DIR)/bin/server
 
-all: $(TARGET)
+# Referências às bibliotecas compartilhadas
+LIBS = $(ROOT_BUILD_DIR)/.network.a $(ROOT_BUILD_DIR)/.utils.a
+
+all: $(LIBS) $(TARGET)
 
 $(TARGET): $(OBJS) $(LIBS)
-	$(CC) $(OBJS) $(LIBS) -o $@ $(LDFLAGS)
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(OBJS) $(LIBS) -o $@ $(LDFLAGS)
+
+$(ROOT_BUILD_DIR)/obj/cmd/server/%.o: %.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJS) $(TARGET) $(LIBS)
+	$(RM) $(ROOT_BUILD_DIR)/obj/cmd
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+.PHONY: all clean
