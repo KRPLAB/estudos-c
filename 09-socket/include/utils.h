@@ -21,4 +21,13 @@ char *tokenize(char *str, const char *delimiters);
  * @return Metodo da requisição (GET, POST, PUT, PATCH, DELETE)
  */
 int identify_method(const char *first_line);
+
+/**
+ * @brief Envia todos os bytes de um buffer através de um socket
+ * @param s socket
+ * @param buf buffer contendo os dados a serem enviados
+ * @param len ponteiro para o tamanho do buffer
+ * @return 0 em caso de sucesso, -1 em caso de erro
+ */
+int utils_send_all(int s, char *buf, int *len);
 #endif

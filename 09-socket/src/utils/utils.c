@@ -1,4 +1,5 @@
-#include <string.h>        // Para strlen
+#include <string.h>
+#include <sys/socket.h>
 
 #include "../../include/utils.h"
 #include "../../include/common.h"
@@ -21,4 +22,23 @@ int identify_method(const char *method_str) {
     } else {
         return UNKNOWN;
     }
+}
+
+int utils_send_all(int s, char *buf, int *len) {
+    int total = 0;
+    int bytesleft = *len;
+    int n = 0;
+
+    while (total < *len) {
+        n = send(s, buf + total, bytesleft, 0);
+        if (n == -1)
+            break;
+
+        total += n;
+        bytesleft -= n;
+    }
+
+    *len = total;
+
+    return n == -1 ? -1 : 0;
 }
