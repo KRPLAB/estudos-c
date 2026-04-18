@@ -1,8 +1,28 @@
-# Ignorar arquivos binários e bibliotecas estáticas
+# Artefatos de compilação
+build/
 *.o
 *.a
 *.so
 *.out
 *.exe
 *.bin
-redis-server
+
+# Executáveis
+cmd/server/redis-server
+cmd/server/server
+
+# IDE e editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Deps e variáveis locais
+*.dep
+.env
+.env.local
+
+# Logs
+*.log
