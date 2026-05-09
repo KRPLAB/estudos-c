@@ -1,6 +1,5 @@
-#include "stdbool.h"
+#include <stdbool.h>
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_video.h>
 #include <stdio.h>
 
 const int SCREEN_WIDTH = 640;
@@ -10,6 +9,8 @@ int main(int argc, char *argv[]) {
   // A janela onde tudo será renderizado
   SDL_Window *window = NULL;
 
+  (void)argc;
+  (void)argv;
   // A superfície onde a janela é renderizada
   SDL_Surface *screenSurface = NULL;
 
@@ -25,6 +26,7 @@ int main(int argc, char *argv[]) {
                             SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
   if (window == NULL) {
     printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
+    SDL_Quit();
     return 1;
   } else {
     // Obtém a superfície da janela
@@ -41,11 +43,14 @@ int main(int argc, char *argv[]) {
     SDL_Event e;
     bool quit = false;
 
-    while (quit == false) {
-      while (SDL_PollEvent(&e)) {
-        if (e.type == SDL_QUIT) {
-          quit = true;
-        }
+    while (!quit) {
+      if (SDL_WaitEvent(&e) == 0) {
+        printf("SDL_WaitEvent failed! SDL_Error: %s\n", SDL_GetError());
+        break;
+      }
+
+      if (e.type == SDL_QUIT) {
+        quit = true;
       }
     }
   }
